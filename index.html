@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mes applis de classe</title>
+<meta name="theme-color" content="#7c3aed">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  body { margin:0; font-family:'Segoe UI',Roboto,Arial,sans-serif; background:#f5f3ff; color:#1f2937; }
+  main { max-width:900px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { text-align:center; color:#6d28d9; font-size:2rem; margin:8px 0 28px; }
+  h2 { font-size:1.4rem; color:#4c1d95; margin:28px 0 12px; }
+  .grille { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+  a.carte { display:flex; flex-direction:column; align-items:center; gap:10px; padding:22px 14px;
+            background:#fff; border-radius:24px; text-decoration:none; color:inherit;
+            box-shadow:0 4px 14px rgba(76,29,149,.15); border:3px solid #ddd6fe; text-align:center; }
+  a.carte:active { transform:scale(.97); }
+  a.carte img { width:96px; height:96px; border-radius:22px; }
+  a.carte span { font-size:1.2rem; font-weight:700; }
+  a.carte small { color:#6b7280; font-size:.95rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Mes applis de classe</h1>
+
+  <!-- ===== POUR AJOUTER UNE APPLI =====
+       1. Copie un bloc <a class="carte"> ci-dessous dans la bonne rubrique.
+       2. Change le lien (href), l'icône (img src), le titre et la petite description.
+       3. Pour une nouvelle matière : copie un bloc <h2> + <div class="grille"> complet. -->
+
+  <h2>Français</h2>
+  <div class="grille">
+    <a class="carte" href="francais/lecture-progressive/">
+      <img src="francais/lecture-progressive/icon-192.png" alt="">
+      <span>Lecture progressive</span>
+      <small>30 textes, 3 niveaux</small>
+    </a>
+  </div>
+</main>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+</script>
+</body>
+</html>

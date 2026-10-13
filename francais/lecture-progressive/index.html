@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture Progressive - P3</title>
+    <meta name="theme-color" content="#7c3aed">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.29.10/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // Fonction pour mélanger un tableau (Fisher-Yates)
+        const shuffleArray = (array) => {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        };
+        // Icônes SVG
+        const Book = () => (
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+        );
+
+        const Trophy = () => (
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                <path d="M4 22h16"></path>
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+            </svg>
+        );
+
+        const Star = () => (
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+        );
+
+        const CheckCircle = () => (
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+        );
+
+        const XCircle = () => (
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+        );
+
+        const RotateCcw = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+        );
+
+        const User = () => (
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+        );
+
+        
+        const TEXTES = [
+                // ========== NIVEAU FACILE - 10 TEXTES ==========
+                {niveau:"Facile",titre:"Le chat de Léa",texte:"Léa a un petit chat gris. Il s'appelle Minou. Minou aime jouer avec une balle rouge. Tous les matins, il mange des croquettes dans son bol bleu. Minou est un chat très gentil. Il ronronne quand Léa le caresse.",questions:[{question:"De quelle couleur est le chat de Léa ?",options:["Noir","Gris","Blanc","Roux"],reponse:1},{question:"Comment s'appelle le chat ?",options:["Félix","Minou","Tigrou","Minette"],reponse:1},{question:"Avec quoi Minou aime-t-il jouer ?",options:["Une souris","Un bâton","Une balle rouge","Une ficelle"],reponse:2},{question:"De quelle couleur est le bol de Minou ?",options:["Rouge","Vert","Bleu","Jaune"],reponse:2}]},
+                {niveau:"Facile",titre:"Le chien de Lucas",texte:"Lucas a un gros chien marron. Il s'appelle Rex. Rex aime courir dans le jardin. Chaque soir, Lucas donne à manger à Rex. Rex dort dans une niche rouge. C'est le meilleur ami de Lucas.",questions:[{question:"Comment s'appelle le chien ?",options:["Max","Rex","Bob","Tom"],reponse:1},{question:"De quelle couleur est le chien ?",options:["Noir","Blanc","Marron","Gris"],reponse:2},{question:"Où Rex aime-t-il courir ?",options:["Dans la rue","Dans le jardin","Dans la maison","À l'école"],reponse:1},{question:"De quelle couleur est la niche ?",options:["Bleue","Verte","Rouge","Jaune"],reponse:2}]},
+                {niveau:"Facile",titre:"L'oiseau de Marie",texte:"Marie a un petit oiseau jaune. Il s'appelle Coco. Coco vit dans une cage bleue. Il aime chanter le matin. Marie lui donne des graines et de l'eau. Coco est très joyeux.",questions:[{question:"De quelle couleur est l'oiseau ?",options:["Rouge","Jaune","Vert","Bleu"],reponse:1},{question:"Comment s'appelle l'oiseau ?",options:["Coco","Lolo","Kiki","Piou"],reponse:0},{question:"Quand Coco aime-t-il chanter ?",options:["Le soir","La nuit","Le matin","L'après-midi"],reponse:2},{question:"Que mange Coco ?",options:["Du pain","Des graines","Des fruits","Des bonbons"],reponse:1}]},
+                {niveau:"Facile",titre:"Le vélo de Tom",texte:"Tom a un beau vélo vert. Il roule dans le parc tous les jours. Tom porte un casque rouge pour être en sécurité. Il aime faire des courses avec ses amis. Son vélo a une sonnette qui fait dring dring.",questions:[{question:"De quelle couleur est le vélo ?",options:["Bleu","Rouge","Vert","Jaune"],reponse:2},{question:"Où Tom fait-il du vélo ?",options:["À l'école","Dans le parc","À la maison","Au magasin"],reponse:1},{question:"De quelle couleur est le casque ?",options:["Vert","Bleu","Rouge","Noir"],reponse:2},{question:"Quel bruit fait la sonnette ?",options:["Bip bip","Dring dring","Tut tut","Pouet pouet"],reponse:1}]},
+                {niveau:"Facile",titre:"La poupée d'Emma",texte:"Emma a une jolie poupée avec des cheveux blonds. Elle s'appelle Lola. Emma lui met une robe rose. Lola dort dans un petit lit blanc. Emma joue avec Lola tous les jours. Elle l'aime beaucoup.",questions:[{question:"Comment s'appelle la poupée ?",options:["Lola","Lisa","Luna","Léa"],reponse:0},{question:"De quelle couleur sont les cheveux de la poupée ?",options:["Noirs","Roux","Bruns","Blonds"],reponse:3},{question:"De quelle couleur est la robe ?",options:["Bleue","Rose","Verte","Jaune"],reponse:1},{question:"De quelle couleur est le lit ?",options:["Blanc","Rose","Bleu","Rouge"],reponse:0}]},
+                {niveau:"Facile",titre:"Le poisson de Noah",texte:"Noah a un petit poisson orange. Il s'appelle Bulle. Bulle nage dans un aquarium rond. Noah lui donne à manger tous les matins. Il y a des cailloux bleus au fond de l'aquarium. Bulle fait des bulles dans l'eau.",questions:[{question:"De quelle couleur est le poisson ?",options:["Bleu","Rouge","Orange","Vert"],reponse:2},{question:"Comment s'appelle le poisson ?",options:["Bulle","Nemo","Flash","Étoile"],reponse:0},{question:"Quelle est la forme de l'aquarium ?",options:["Carré","Rond","Rectangle","Triangle"],reponse:1},{question:"De quelle couleur sont les cailloux ?",options:["Rouges","Verts","Bleus","Jaunes"],reponse:2}]},
+                {niveau:"Facile",titre:"Le ballon de Liam",texte:"Liam a un ballon de foot noir et blanc. Il joue au foot dans la cour de l'école. Liam marque beaucoup de buts. Ses amis crient bravo. Après le match, Liam range son ballon dans son sac rouge.",questions:[{question:"De quelles couleurs est le ballon ?",options:["Rouge et bleu","Noir et blanc","Vert et jaune","Orange et noir"],reponse:1},{question:"Où Liam joue-t-il au foot ?",options:["Au parc","Dans la cour","Dans la rue","À la maison"],reponse:1},{question:"Que font les amis de Liam ?",options:["Ils pleurent","Ils dorment","Ils crient bravo","Ils partent"],reponse:2},{question:"De quelle couleur est le sac ?",options:["Bleu","Vert","Rouge","Noir"],reponse:2}]},
+                {niveau:"Facile",titre:"La trottinette de Chloé",texte:"Chloé a une trottinette rose avec des roues qui brillent. Elle roule sur le trottoir. Chloé porte des genouillères bleues. Sa trottinette va très vite. Chloé s'amuse beaucoup avec sa trottinette.",questions:[{question:"De quelle couleur est la trottinette ?",options:["Bleue","Rose","Verte","Rouge"],reponse:1},{question:"Que font les roues ?",options:["Elles brillent","Elles chantent","Elles sautent","Elles tournent lentement"],reponse:0},{question:"Où Chloé roule-t-elle ?",options:["Sur la route","Sur le trottoir","Dans le parc","À l'école"],reponse:1},{question:"De quelle couleur sont les genouillères ?",options:["Roses","Rouges","Bleues","Vertes"],reponse:2}]},
+                {niveau:"Facile",titre:"Le livre de Jade",texte:"Jade a un livre d'histoires avec une couverture jaune. Il y a des images colorées dedans. Jade lit son livre tous les soirs avant de dormir. Son histoire préférée parle d'une princesse. Jade garde son livre sur son étagère.",questions:[{question:"De quelle couleur est la couverture ?",options:["Rouge","Jaune","Bleue","Verte"],reponse:1},{question:"Qu'y a-t-il dans le livre ?",options:["Des photos","Des images","Des cartes","Des chansons"],reponse:1},{question:"Quand Jade lit-elle son livre ?",options:["Le matin","À midi","Le soir","L'après-midi"],reponse:2},{question:"De quoi parle l'histoire préférée ?",options:["D'un roi","D'une princesse","D'un dragon","D'un chat"],reponse:1}]},
+                {niveau:"Facile",titre:"Le robot de Théo",texte:"Théo a un robot jouet argenté. Le robot a des yeux rouges qui s'allument. Il peut marcher et parler. Théo appuie sur un bouton vert pour le faire marcher. Le robot dit bonjour. C'est le jouet préféré de Théo.",questions:[{question:"De quelle couleur est le robot ?",options:["Noir","Argenté","Bleu","Rouge"],reponse:1},{question:"De quelle couleur sont les yeux ?",options:["Bleus","Verts","Rouges","Jaunes"],reponse:2},{question:"Que peut faire le robot ?",options:["Voler","Marcher et parler","Nager","Danser"],reponse:1},{question:"De quelle couleur est le bouton ?",options:["Rouge","Bleu","Vert","Jaune"],reponse:2}]},
+                
+                // ========== NIVEAU MOYEN - 10 TEXTES ==========
+                {niveau:"Moyen",titre:"La sortie au parc",texte:"Mercredi après-midi, la classe de madame Sophie est allée au parc. Les enfants ont observé les canards dans l'étang. Il y avait trois canetons jaunes qui suivaient leur maman. Ensuite, les élèves ont joué sur les balançoires et le toboggan. Avant de rentrer à l'école, ils ont mangé leur collation sous un grand arbre. C'était une belle journée !",questions:[{question:"Quel jour la classe est-elle allée au parc ?",options:["Lundi","Mardi","Mercredi","Jeudi"],reponse:2},{question:"Qu'ont observé les enfants dans l'étang ?",options:["Des poissons","Des canards","Des grenouilles","Des cygnes"],reponse:1},{question:"Combien y avait-il de canetons ?",options:["Deux","Trois","Quatre","Cinq"],reponse:1},{question:"Où ont-ils mangé leur collation ?",options:["Sur un banc","Sous un arbre","Dans la classe","Sur l'herbe"],reponse:1},{question:"Comment était la journée ?",options:["Ennuyeuse","Fatigante","Belle","Pluvieuse"],reponse:2}]},
+                {niveau:"Moyen",titre:"L'anniversaire de Sarah",texte:"Samedi dernier, Sarah a fêté ses 9 ans. Elle a invité dix amis à sa fête. Maman a préparé un gâteau au chocolat avec des bougies roses. Sarah a reçu beaucoup de cadeaux : des livres, des jeux et une belle montre. Tout le monde a chanté Joyeux anniversaire. Après le goûter, les enfants ont joué à cache-cache dans le jardin.",questions:[{question:"Quel âge a Sarah maintenant ?",options:["8 ans","9 ans","10 ans","11 ans"],reponse:1},{question:"Combien d'amis a-t-elle invités ?",options:["Huit","Dix","Douze","Quinze"],reponse:1},{question:"Quel parfum était le gâteau ?",options:["Vanille","Chocolat","Fraise","Citron"],reponse:1},{question:"Qu'a reçu Sarah comme cadeau ?",options:["Un vélo","Des livres et des jeux","Un chat","Un ordinateur"],reponse:1},{question:"À quoi ont joué les enfants ?",options:["Au foot","À cache-cache","Aux cartes","À la marelle"],reponse:1}]},
+                {niveau:"Moyen",titre:"La visite à la ferme",texte:"Lundi matin, l'école a organisé une sortie à la ferme. Les élèves ont vu des vaches, des cochons et des poules. Le fermier leur a montré comment traire une vache. Emma a eu peur du grand coq rouge. À midi, tout le monde a pique-niqué dans le pré. Les enfants ont adoré cette journée à la campagne.",questions:[{question:"Quand a eu lieu la sortie ?",options:["Dimanche","Lundi matin","Mardi","Vendredi"],reponse:1},{question:"Quels animaux les élèves ont-ils vus ?",options:["Des chevaux","Des vaches et des poules","Des lapins","Des moutons"],reponse:1},{question:"Qu'a montré le fermier ?",options:["Comment planter","Comment traire une vache","Comment faire du pain","Comment monter à cheval"],reponse:1},{question:"De quelle couleur était le coq ?",options:["Blanc","Noir","Rouge","Jaune"],reponse:2},{question:"Où ont-ils pique-niqué ?",options:["Dans la grange","Dans le pré","À l'école","Dans le bus"],reponse:1}]},
+                {niveau:"Moyen",titre:"La tempête",texte:"Hier soir, il y a eu une grande tempête. Le vent soufflait très fort. La pluie tombait sans arrêt. Papa a fermé tous les volets de la maison. On a entendu le tonnerre gronder. Maman a allumé des bougies car l'électricité était coupée. Ce matin, le soleil est revenu et tout est calme.",questions:[{question:"Quand y a-t-il eu la tempête ?",options:["Ce matin","Hier soir","Il y a une semaine","Demain"],reponse:1},{question:"Comment était le vent ?",options:["Doux","Léger","Très fort","Inexistant"],reponse:2},{question:"Qu'a fermé papa ?",options:["Les portes","Les volets","Les rideaux","Les fenêtres"],reponse:1},{question:"Pourquoi maman a-t-elle allumé des bougies ?",options:["Pour une fête","L'électricité était coupée","C'était joli","Pour se réchauffer"],reponse:1},{question:"Quel temps fait-il ce matin ?",options:["Il pleut","Il neige","Il y a du soleil","Il y a du vent"],reponse:2}]},
+                {niveau:"Moyen",titre:"La bibliothèque",texte:"Tous les jeudis, Julie va à la bibliothèque avec sa maman. Elle peut emprunter trois livres à chaque visite. Julie aime les histoires d'aventures et les contes de fées. La bibliothécaire s'appelle Madame Dubois. Elle est très gentille et aide Julie à choisir ses livres. Julie doit rapporter les livres après deux semaines.",questions:[{question:"Quel jour Julie va-t-elle à la bibliothèque ?",options:["Le mardi","Le mercredi","Le jeudi","Le vendredi"],reponse:2},{question:"Combien de livres peut-elle emprunter ?",options:["Deux","Trois","Quatre","Cinq"],reponse:1},{question:"Quel type d'histoires Julie aime-t-elle ?",options:["Les aventures et les contes","Les documentaires","Les BD","Les magazines"],reponse:0},{question:"Comment s'appelle la bibliothécaire ?",options:["Madame Martin","Madame Dubois","Madame Petit","Madame Blanc"],reponse:1},{question:"Après combien de temps faut-il rapporter les livres ?",options:["Une semaine","Deux semaines","Un mois","Trois jours"],reponse:1}]},
+                {niveau:"Moyen",titre:"Le marché",texte:"Dimanche matin, toute la famille est allée au marché. Il y avait beaucoup de stands colorés. Maman a acheté des tomates, des carottes et des pommes. Papa a choisi du fromage et du pain frais. Les enfants ont eu droit à une crêpe au sucre. Un musicien jouait de l'accordéon. C'était très animé !",questions:[{question:"Quand la famille est-elle allée au marché ?",options:["Samedi soir","Dimanche matin","Lundi","Vendredi"],reponse:1},{question:"Qu'a acheté maman ?",options:["Des fleurs","Des tomates et des pommes","Du poisson","De la viande"],reponse:1},{question:"Qu'a choisi papa ?",options:["Du fromage et du pain","Des gâteaux","Des légumes","Des fruits"],reponse:0},{question:"Qu'ont eu les enfants ?",options:["Une glace","Une crêpe au sucre","Un bonbon","Un jus"],reponse:1},{question:"De quel instrument jouait le musicien ?",options:["De la guitare","Du piano","De l'accordéon","De la flûte"],reponse:2}]},
+                {niveau:"Moyen",titre:"Le cours de natation",texte:"Chaque mercredi, Antoine prend des cours de natation à la piscine municipale. Son professeur s'appelle Monsieur Martin. Antoine apprend à nager sur le dos et à plonger. Il porte un maillot bleu et des lunettes de piscine. Après la leçon, il prend toujours une douche chaude. Antoine progresse bien et veut devenir un bon nageur.",questions:[{question:"Quel jour Antoine a-t-il ses cours ?",options:["Le lundi","Le mardi","Le mercredi","Le jeudi"],reponse:2},{question:"Comment s'appelle son professeur ?",options:["Monsieur Dupont","Monsieur Martin","Monsieur Bernard","Monsieur Petit"],reponse:1},{question:"Qu'apprend Antoine ?",options:["À nager sur le dos","À jouer au water-polo","À faire du surf","À pêcher"],reponse:0},{question:"De quelle couleur est son maillot ?",options:["Rouge","Vert","Bleu","Noir"],reponse:2},{question:"Que veut devenir Antoine ?",options:["Professeur","Un bon nageur","Docteur","Pompier"],reponse:1}]},
+                {niveau:"Moyen",titre:"Le pique-nique",texte:"Pour le premier jour du printemps, la famille de Clara a organisé un pique-nique. Ils sont allés au bord de la rivière. Maman a préparé des sandwichs au jambon et des salades. Papa a apporté des jus de fruits et des gâteaux. Clara et son frère ont joué au ballon. Ils ont vu des papillons et des fleurs sauvages. Tout le monde était content.",questions:[{question:"Pourquoi ont-ils fait un pique-nique ?",options:["Pour un anniversaire","Pour le premier jour du printemps","Pour Noël","Pour les vacances"],reponse:1},{question:"Où sont-ils allés ?",options:["À la montagne","Au bord de la rivière","À la plage","Dans la forêt"],reponse:1},{question:"Qu'a préparé maman ?",options:["Des pizzas","Des sandwichs et des salades","Des pâtes","Des crêpes"],reponse:1},{question:"À quoi ont joué Clara et son frère ?",options:["Aux cartes","Au ballon","Cache-cache","À la corde"],reponse:1},{question:"Qu'ont-ils vu ?",options:["Des oiseaux","Des papillons et des fleurs","Des poissons","Des écureuils"],reponse:1}]},
+                {niveau:"Moyen",titre:"La dent perdue",texte:"Ce matin, Maxime a perdu sa première dent en croquant une pomme. Il était très excité ! La maîtresse lui a donné une petite boîte pour mettre sa dent. À la maison, maman lui a expliqué que la petite souris allait passer cette nuit. Maxime a mis sa dent sous l'oreiller. Le lendemain, il a trouvé une pièce de deux euros à la place.",questions:[{question:"Comment Maxime a-t-il perdu sa dent ?",options:["En tombant","En croquant une pomme","En se brossant les dents","En jouant"],reponse:1},{question:"Que lui a donné la maîtresse ?",options:["Un bonbon","Une petite boîte","Un livre","Un diplôme"],reponse:1},{question:"Qui va passer cette nuit ?",options:["Le père Noël","La petite souris","Une fée","Un lutin"],reponse:1},{question:"Où a-t-il mis sa dent ?",options:["Dans un tiroir","Sous l'oreiller","Dans sa poche","Sur la table"],reponse:1},{question:"Qu'a-t-il trouvé le lendemain ?",options:["Un jouet","Une pièce de deux euros","Un bonbon","Rien"],reponse:1}]},
+                {niveau:"Moyen",titre:"Le spectacle de l'école",texte:"Vendredi dernier, l'école a présenté un spectacle de danse. Les élèves de P3 ont dansé sur une musique joyeuse. Léa portait un costume bleu avec des paillettes. Il y avait beaucoup de parents dans la salle. Tout le monde a applaudi très fort. Après le spectacle, les enfants ont reçu un diplôme et un goûter. C'était une soirée mémorable.",questions:[{question:"Quel jour a eu lieu le spectacle ?",options:["Jeudi","Vendredi dernier","Samedi","Dimanche"],reponse:1},{question:"Qu'ont présenté les élèves ?",options:["Une pièce de théâtre","Une danse","Un concert","Un match"],reponse:1},{question:"De quelle couleur était le costume de Léa ?",options:["Rouge","Vert","Bleu","Rose"],reponse:2},{question:"Qui était dans la salle ?",options:["Les professeurs","Les parents","Les voisins","Personne"],reponse:1},{question:"Qu'ont reçu les enfants ?",options:["Un livre","Un diplôme et un goûter","Un jouet","Une médaille"],reponse:1}]},
+                
+                // ========== NIVEAU DIFFICILE - 10 TEXTES ==========
+                {niveau:"Difficile",titre:"Le jardin de Papi Jules",texte:"Papi Jules adore son jardin. Chaque printemps, il plante des légumes : des tomates rouges, des carottes orange et des salades vertes. Il travaille tous les matins très tôt, avant que le soleil ne soit trop chaud. Papi Jules utilise un arrosoir pour donner de l'eau à ses plantes. Parfois, son petit-fils Tom vient l'aider. Ensemble, ils enlèvent les mauvaises herbes et ramassent les légumes mûrs. À la fin de l'été, Papi Jules est toujours fier de partager sa récolte avec toute la famille.",questions:[{question:"Quelle saison Papi Jules commence-t-il à planter ?",options:["L'hiver","Le printemps","L'été","L'automne"],reponse:1},{question:"Pourquoi travaille-t-il tôt le matin ?",options:["Pour voir le lever du soleil","Pour éviter la chaleur","Pour être seul","Parce qu'il se réveille tôt"],reponse:1},{question:"Avec quoi arrose-t-il ses plantes ?",options:["Un tuyau","Un arrosoir","Un seau","La pluie"],reponse:1},{question:"Comment s'appelle son petit-fils ?",options:["Tim","Tom","Sam","Max"],reponse:1},{question:"Que fait Papi Jules avec sa récolte ?",options:["Il la vend","Il la donne à ses voisins","Il la partage avec sa famille","Il la garde pour lui"],reponse:2},{question:"Papi Jules est fier de son jardin.",options:["Vrai","Faux"],reponse:0}]},
+                {niveau:"Difficile",titre:"Le voyage en train",texte:"La semaine dernière, Sophie et sa famille ont pris le train pour aller en vacances à la mer. Le voyage a duré trois heures. Dans le train, Sophie regardait le paysage défiler par la fenêtre. Elle a vu des champs de blé dorés, des villages avec leurs clochers et des vaches qui broutaient paisiblement. Le contrôleur est passé vérifier les billets. À midi, papa a sorti le pique-nique qu'il avait préparé. Quand ils sont arrivés à destination, Sophie pouvait déjà sentir l'odeur de la mer. Elle était impatiente de voir la plage.",questions:[{question:"Où allait la famille de Sophie ?",options:["À la montagne","À la mer","À la campagne","En ville"],reponse:1},{question:"Combien de temps a duré le voyage ?",options:["Deux heures","Trois heures","Quatre heures","Une heure"],reponse:1},{question:"Qu'a vu Sophie par la fenêtre ?",options:["Des immeubles","Des champs et des villages","Des montagnes","La mer"],reponse:1},{question:"Qui a vérifié les billets ?",options:["Le conducteur","Le contrôleur","Papa","Un passager"],reponse:1},{question:"Qu'a fait papa à midi ?",options:["Il a dormi","Il a sorti le pique-nique","Il a lu","Il a téléphoné"],reponse:1},{question:"Sophie était impatiente de voir la plage.",options:["Vrai","Faux"],reponse:0}]},
+                {niveau:"Difficile",titre:"L'orage d'été",texte:"Cet après-midi, le ciel est devenu tout noir. Des nuages sombres et menaçants cachaient le soleil. Soudain, un éclair a illuminé le ciel, suivi d'un coup de tonnerre assourdissant. La pluie s'est mise à tomber violemment, formant de grandes flaques dans la rue. Le vent faisait trembler les arbres et emportait les feuilles. Les oiseaux s'étaient tous cachés. Maman a dit aux enfants de rester à l'intérieur. Au bout d'une heure, l'orage est passé. Un magnifique arc-en-ciel est apparu dans le ciel. Les enfants sont sortis sauter dans les flaques d'eau.",questions:[{question:"De quelle couleur était le ciel au début ?",options:["Bleu","Gris","Noir","Rouge"],reponse:2},{question:"Qu'est-ce qui a illuminé le ciel ?",options:["Le soleil","Un éclair","La lune","Une étoile"],reponse:1},{question:"Que faisait le vent ?",options:["Il soufflait doucement","Il faisait trembler les arbres","Il ne soufflait pas","Il était chaud"],reponse:1},{question:"Que dit maman aux enfants ?",options:["De sortir","De rester à l'intérieur","D'aller jouer","De dormir"],reponse:1},{question:"Qu'est apparu après l'orage ?",options:["Le soleil","Un arc-en-ciel","La neige","La nuit"],reponse:1},{question:"Combien de temps a duré l'orage ?",options:["Trente minutes","Une heure","Deux heures","Toute la journée"],reponse:1}]},
+                {niveau:"Difficile",titre:"La visite au musée",texte:"Mardi dernier, la classe de madame Bertin a visité le musée d'histoire naturelle. Les élèves étaient très excités. Dans la première salle, ils ont découvert d'immenses squelettes de dinosaures. Le guide leur a expliqué que ces créatures vivaient il y a des millions d'années. Ensuite, ils ont vu une collection de papillons colorés sous des vitres. La salle suivante présentait des animaux empaillés : un lion, un ours blanc et même un éléphant ! Avant de partir, chaque enfant a reçu un petit livret sur les dinosaures. De retour en classe, tout le monde ne parlait que du musée.",questions:[{question:"Quel jour la classe a-t-elle visité le musée ?",options:["Lundi","Mardi dernier","Mercredi","Vendredi"],reponse:1},{question:"Comment s'appelle la maîtresse ?",options:["Madame Martin","Madame Bertin","Madame Dubois","Madame Petit"],reponse:1},{question:"Qu'ont-ils vu dans la première salle ?",options:["Des papillons","Des squelettes de dinosaures","Des tableaux","Des poissons"],reponse:1},{question:"Quand vivaient les dinosaures ?",options:["Il y a cent ans","Il y a mille ans","Il y a des millions d'années","Ils vivent encore"],reponse:2},{question:"Quels animaux empaillés ont-ils vus ?",options:["Un chien et un chat","Un lion et un éléphant","Des oiseaux","Des lapins"],reponse:1},{question:"Qu'ont reçu les enfants avant de partir ?",options:["Un jouet","Un livret sur les dinosaures","Un bonbon","Rien"],reponse:1}]},
+                {niveau:"Difficile",titre:"La cabane dans l'arbre",texte:"Pendant les vacances d'été, Martin et son papa ont construit une cabane dans le grand chêne du jardin. Ils ont d'abord fait des plans sur du papier. Ensuite, ils ont coupé des planches de bois et les ont clouées ensemble. Il leur a fallu trois jours pour terminer la cabane. Martin a peint les murs en vert et papa a installé une petite fenêtre. À l'intérieur, Martin a mis des coussins, une lampe et ses bandes dessinées préférées. Maintenant, c'est son endroit secret. Il y monte tous les après-midis pour lire ou rêver. De là-haut, il peut observer les oiseaux et voir tout le jardin.",questions:[{question:"Avec qui Martin a-t-il construit la cabane ?",options:["Avec son frère","Avec son papa","Tout seul","Avec son ami"],reponse:1},{question:"Dans quel arbre est la cabane ?",options:["Un chêne","Un sapin","Un pommier","Un érable"],reponse:0},{question:"Combien de temps a pris la construction ?",options:["Un jour","Deux jours","Trois jours","Une semaine"],reponse:2},{question:"De quelle couleur Martin a-t-il peint les murs ?",options:["Bleu","Rouge","Vert","Jaune"],reponse:2},{question:"Qu'a mis Martin à l'intérieur ?",options:["Un ordinateur","Des coussins et des BD","Des jouets","Rien"],reponse:1},{question:"Que peut voir Martin de la cabane ?",options:["La rue","Les oiseaux et le jardin","La mer","Les montagnes"],reponse:1}]},
+                {niveau:"Difficile",titre:"Le cirque",texte:"Samedi soir, toute la famille est allée voir un spectacle de cirque. Sous le grand chapiteau rayé rouge et blanc, il y avait beaucoup de monde. Le spectacle a commencé avec des clowns qui faisaient rire tout le monde. Ensuite, des acrobates ont fait des numéros impressionnants en hauteur, sans filet de sécurité. Les enfants ont adoré voir les jongleurs lancer des balles et des massues. Puis, un magicien a fait apparaître des colombes blanches. Le moment préféré de Lucas était quand les lions sont entrés dans la piste avec leur dompteur. À la fin, tous les artistes ont salué sous les applaudissements. C'était un spectacle extraordinaire !",questions:[{question:"Quel jour sont-ils allés au cirque ?",options:["Vendredi","Samedi soir","Dimanche","Lundi"],reponse:1},{question:"De quelles couleurs était le chapiteau ?",options:["Bleu et jaune","Rouge et blanc","Vert et orange","Noir et blanc"],reponse:1},{question:"Qui a fait rire tout le monde au début ?",options:["Les acrobates","Les jongleurs","Les clowns","Le magicien"],reponse:2},{question:"Qu'a fait apparaître le magicien ?",options:["Des lapins","Des colombes blanches","Un tigre","Des fleurs"],reponse:1},{question:"Quel était le moment préféré de Lucas ?",options:["Les clowns","Les jongleurs","Les lions avec leur dompteur","Le magicien"],reponse:2},{question:"Comment les artistes ont-ils terminé ?",options:["En dansant","En saluant","En chantant","En partant"],reponse:1}]},
+                {niveau:"Difficile",titre:"La recette de crêpes",texte:"Dimanche matin, Mamie a décidé d'apprendre à Lucie à faire des crêpes. Elles ont d'abord lu la recette ensemble. Il fallait de la farine, des œufs, du lait et une pincée de sel. Mamie a cassé trois œufs dans un saladier. Lucie a versé la farine en faisant attention de ne pas en mettre partout. Ensuite, elles ont ajouté le lait petit à petit en mélangeant avec un fouet. La pâte devait reposer pendant trente minutes. Quand la pâte était prête, Mamie a fait chauffer la poêle. Lucie a versé une louche de pâte et a regardé la crêpe cuire. Elles ont fait dix crêpes délicieuses. Toute la famille s'est régalée au petit-déjeuner !",questions:[{question:"Avec qui Lucie fait-elle des crêpes ?",options:["Avec maman","Avec mamie","Avec sa sœur","Toute seule"],reponse:1},{question:"Quels ingrédients faut-il ?",options:["Sucre et beurre","Farine, œufs, lait et sel","Chocolat et crème","Pommes et cannelle"],reponse:1},{question:"Combien d'œufs mamie a-t-elle cassés ?",options:["Deux","Trois","Quatre","Cinq"],reponse:1},{question:"Avec quoi ont-elles mélangé ?",options:["Une cuillère","Un fouet","Leurs mains","Un mixeur"],reponse:1},{question:"Combien de temps la pâte devait reposer ?",options:["Dix minutes","Vingt minutes","Trente minutes","Une heure"],reponse:2},{question:"Combien de crêpes ont-elles faites ?",options:["Cinq","Huit","Dix","Quinze"],reponse:2}]},
+                {niveau:"Difficile",titre:"La randonnée en montagne",texte:"Pendant les vacances, la famille d'Arthur est partie faire une randonnée en montagne. Ils ont commencé à marcher très tôt le matin quand l'air était encore frais. Le sentier montait en zigzag à travers la forêt de sapins. Arthur portait un sac à dos avec de l'eau et des sandwichs. Au bout de deux heures, ils sont arrivés à un joli lac d'altitude. L'eau était si claire qu'on voyait les poissons nager. Ils se sont assis sur un rocher pour pique-niquer. Papa a expliqué qu'ils étaient à 1500 mètres d'altitude. Après le repas, ils ont fait le tour du lac. Arthur a ramassé des pierres lisses et blanches. Le retour a été plus facile car ça descendait. Arthur était fatigué mais très content de sa journée.",questions:[{question:"Où est partie la famille d'Arthur ?",options:["À la plage","En montagne","En ville","À la ferme"],reponse:1},{question:"À quel moment sont-ils partis ?",options:["L'après-midi","Le soir","Très tôt le matin","À midi"],reponse:2},{question:"Que portait Arthur ?",options:["Un chapeau","Un sac à dos","Des lunettes","Une casquette"],reponse:1},{question:"Qu'ont-ils trouvé après deux heures ?",options:["Un village","Un lac","Une grotte","Une rivière"],reponse:1},{question:"À quelle altitude étaient-ils ?",options:["500 mètres","1000 mètres","1500 mètres","2000 mètres"],reponse:2},{question:"Qu'a ramassé Arthur ?",options:["Des fleurs","Des pierres lisses","Des coquillages","Des feuilles"],reponse:1}]},
+                {niveau:"Difficile",titre:"Le marché de Noël",texte:"Début décembre, la ville organise son marché de Noël. Toutes les places sont décorées avec des guirlandes lumineuses et un grand sapin illuminé. Il y a des petits chalets en bois qui vendent des décorations, des jouets et des spécialités. L'odeur du vin chaud et des marrons grillés remplit l'air. Des chants de Noël résonnent dans les haut-parleurs. Les enfants peuvent faire un tour de manège et voir le père Noël dans sa grotte magique. Hier, Amélie y est allée avec ses parents. Elle a bu un chocolat chaud avec de la crème fouettée. Papa a acheté une couronne de l'Avent pour la maison. Maman a trouvé de jolies boules pour décorer le sapin. Amélie a fait sa photo avec le père Noël. Elle lui a dit qu'elle voulait une trottinette pour Noël. Le marché de Noël crée une ambiance féerique dans toute la ville.",questions:[{question:"Quand a lieu le marché de Noël ?",options:["En octobre","En novembre","Début décembre","En janvier"],reponse:2},{question:"Avec quoi la ville est-elle décorée ?",options:["Des ballons","Des guirlandes et un sapin","Des drapeaux","Des fleurs"],reponse:1},{question:"Quelles odeurs y a-t-il ?",options:["Pain et café","Vin chaud et marrons","Poisson et frites","Fleurs"],reponse:1},{question:"Qu'a bu Amélie ?",options:["Un jus","Un chocolat chaud","Un soda","Du lait"],reponse:1},{question:"Qu'a acheté papa ?",options:["Un jouet","Une couronne de l'Avent","Des biscuits","Un livre"],reponse:1},{question:"Que veut Amélie pour Noël ?",options:["Une poupée","Un vélo","Une trottinette","Un livre"],reponse:2}]},
+                {niveau:"Difficile",titre:"L'aquarium géant",texte:"Mercredi, l'école a organisé une sortie à l'aquarium géant de la ville. C'est le plus grand aquarium d'Europe ! Les élèves ont d'abord traversé un tunnel sous-marin transparent. Au-dessus de leurs têtes, des requins et des raies glissaient silencieusement. C'était impressionnant ! Dans la salle suivante, ils ont découvert les poissons tropicaux aux couleurs éclatantes : jaune, bleu, orange et violet. Un soigneur leur a expliqué comment on nourrit les animaux. Ils ont vu des méduses qui flottaient comme des parachutes transparents. La partie la plus amusante était le bassin tactile où on pouvait caresser doucement des étoiles de mer et des petits requins inoffensifs. Emma a même touché une raie ! Avant de partir, ils ont assisté au spectacle des dauphins qui sautaient très haut et faisaient des acrobaties. Tous les enfants étaient émerveillés par cette visite au monde sous-marin.",questions:[{question:"Quel jour ont-ils visité l'aquarium ?",options:["Lundi","Mardi","Mercredi","Jeudi"],reponse:2},{question:"Qu'ont-ils traversé en premier ?",options:["Un pont","Un tunnel sous-marin","Une salle","Un escalier"],reponse:1},{question:"Quels animaux ont-ils vus dans le tunnel ?",options:["Des poissons rouges","Des requins et des raies","Des dauphins","Des tortues"],reponse:1},{question:"Qui a expliqué comment nourrir les animaux ?",options:["Un professeur","Un guide","Un soigneur","Le directeur"],reponse:2},{question:"Qu'a touché Emma ?",options:["Un requin","Une raie","Un dauphin","Une méduse"],reponse:1},{question:"Quel spectacle ont-ils vu à la fin ?",options:["Les requins","Les méduses","Le spectacle des dauphins","Les poissons tropicaux"],reponse:2}]}
+        ];
+
+        // ===== Enregistrement sur la tablette (localStorage) =====
+        // Structure : { dernier: "pseudo", pseudos: { "pseudo": { "Facile": { "Titre du texte": {score, total} } } } }
+        const STORAGE_KEY = "lecture-progressive-v1";
+        const chargerDonnees = () => {
+            try {
+                const d = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                if (d && d.pseudos) return d;
+            } catch (e) {}
+            return { dernier: "", pseudos: {} };
+        };
+        const sauverDonnees = (d) => {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch (e) {}
+        };
+
+        const NIVEAUX = [
+            { nom: "Facile", desc: "10 textes courts et simples", emoji: "😊", boite: "bg-green-50 border-green-300 hover:bg-green-100", titre: "text-green-600" },
+            { nom: "Moyen", desc: "10 textes plus longs", emoji: "🤔", boite: "bg-yellow-50 border-yellow-300 hover:bg-yellow-100", titre: "text-yellow-600" },
+            { nom: "Difficile", desc: "10 textes complexes", emoji: "🧠", boite: "bg-red-50 border-red-300 hover:bg-red-100", titre: "text-red-600" }
+        ];
+
+        const LectureProgressive = () => {
+            const [data, setData] = useState(chargerDonnees);
+            const [pseudo, setPseudo] = useState(() => {
+                const d = chargerDonnees();
+                return d.dernier && d.pseudos[d.dernier] ? d.dernier : "";
+            });
+            const [nouveauPseudo, setNouveauPseudo] = useState("");
+            const [niveau, setNiveau] = useState("");
+            const [fileTextes, setFileTextes] = useState([]);
+            const [indexTexte, setIndexTexte] = useState(0);
+            const [questionNum, setQuestionNum] = useState(0);
+            const [score, setScore] = useState(0);
+            const [showResult, setShowResult] = useState(false);
+            const [isCorrect, setIsCorrect] = useState(false);
+            const [termine, setTermine] = useState(false);
+            const [lectureFaite, setLectureFaite] = useState(false);
+
+            const textesDuNiveau = (nom) => TEXTES.filter(t => t.niveau === nom);
+            const textesFaits = (p, nom) => (data.pseudos[p] && data.pseudos[p][nom]) || {};
+
+            const enregistrer = (nouvelles) => { setData(nouvelles); sauverDonnees(nouvelles); };
+
+            // ----- Pseudo -----
+            const choisirPseudo = (nom) => {
+                setPseudo(nom);
+                setNiveau("");
+                enregistrer({ ...data, dernier: nom });
+            };
+
+            const creerPseudo = (e) => {
+                e.preventDefault();
+                const nom = nouveauPseudo.trim().slice(0, 20);
+                if (!nom) return;
+                const existant = Object.keys(data.pseudos).find(n => n.toLowerCase() === nom.toLowerCase());
+                if (existant) {
+                    choisirPseudo(existant);
+                } else {
+                    setPseudo(nom);
+                    setNiveau("");
+                    enregistrer({ dernier: nom, pseudos: { ...data.pseudos, [nom]: {} } });
+                }
+                setNouveauPseudo("");
+            };
+
+            const changerPseudo = () => {
+                setPseudo("");
+                setNiveau("");
+                setFileTextes([]);
+                setTermine(false);
+            };
+
+            // ----- Niveau : on ne propose que les textes pas encore terminés -----
+            const demarrerNiveau = (nom) => {
+                const faits = textesFaits(pseudo, nom);
+                const restants = textesDuNiveau(nom).filter(t => !(t.titre in faits));
+                setNiveau(nom);
+                setIndexTexte(0);
+                setQuestionNum(0);
+                setScore(0);
+                setLectureFaite(false);
+                setShowResult(false);
+                if (restants.length === 0) {
+                    setFileTextes([]);
+                    setTermine(true);
+                } else {
+                    setFileTextes(shuffleArray(restants));
+                    setTermine(false);
+                }
+            };
+
+            const recommencerNiveau = () => {
+                const pseudoData = { ...(data.pseudos[pseudo] || {}) };
+                delete pseudoData[niveau];
+                enregistrer({ ...data, pseudos: { ...data.pseudos, [pseudo]: pseudoData } });
+                const restants = textesDuNiveau(niveau);
+                setFileTextes(shuffleArray(restants));
+                setIndexTexte(0);
+                setQuestionNum(0);
+                setScore(0);
+                setLectureFaite(false);
+                setTermine(false);
+            };
+
+            const retourMenu = () => {
+                setNiveau("");
+                setFileTextes([]);
+                setTermine(false);
+                setLectureFaite(false);
+            };
+
+            // ----- Réponse à une question -----
+            const repondre = (choix) => {
+                const texte = fileTextes[indexTexte];
+                const question = texte.questions[questionNum];
+                const correct = choix === question.reponse;
+                const scoreFinal = correct ? score + 1 : score;
+
+                setIsCorrect(correct);
+                setShowResult(true);
+                if (correct) setScore(scoreFinal);
+
+                setTimeout(() => {
+                    setShowResult(false);
+                    if (questionNum < texte.questions.length - 1) {
+                        setQuestionNum(questionNum + 1);
+                        return;
+                    }
+                    // Fin du texte : on le note comme terminé pour ce pseudo
+                    const pseudoData = { ...(data.pseudos[pseudo] || {}) };
+                    const niveauData = { ...(pseudoData[niveau] || {}) };
+                    const ancien = niveauData[texte.titre];
+                    if (!ancien || scoreFinal > ancien.score) {
+                        niveauData[texte.titre] = { score: scoreFinal, total: texte.questions.length };
+                    } else {
+                        niveauData[texte.titre] = ancien;
+                    }
+                    pseudoData[niveau] = niveauData;
+                    enregistrer({ ...data, dernier: pseudo, pseudos: { ...data.pseudos, [pseudo]: pseudoData } });
+
+                    if (indexTexte < fileTextes.length - 1) {
+                        setIndexTexte(indexTexte + 1);
+                        setQuestionNum(0);
+                        setScore(0);
+                        setLectureFaite(false);
+                    } else {
+                        setTermine(true);
+                    }
+                }, 1500);
+            };
+
+            // ===== ÉCRAN 1 : choix du pseudo =====
+            if (!pseudo) {
+                const pseudos = Object.keys(data.pseudos).sort((a, b) => a.localeCompare(b, "fr"));
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+                            <div className="flex justify-center mb-4 text-blue-500"><User /></div>
+                            <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">Lecture Progressive</h1>
+
+                            {pseudos.length > 0 && (
+                                <div className="mb-6">
+                                    <p className="text-center text-gray-600 mb-3">Touche ton pseudo :</p>
+                                    <div className="space-y-2">
+                                        {pseudos.map(nom => (
+                                            <button
+                                                key={nom}
+                                                onClick={() => choisirPseudo(nom)}
+                                                className="w-full p-4 rounded-xl text-xl font-bold bg-purple-50 border-2 border-purple-200 hover:bg-purple-100 text-purple-700 transition"
+                                            >
+                                                {nom}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <form onSubmit={creerPseudo}>
+                                <p className="text-center text-gray-600 mb-3">
+                                    {pseudos.length > 0 ? "Nouveau ? Invente un pseudo :" : "Invente un pseudo pour commencer :"}
+                                </p>
+                                <input
+                                    type="text"
+                                    value={nouveauPseudo}
+                                    onChange={(e) => setNouveauPseudo(e.target.value)}
+                                    maxLength={20}
+                                    placeholder="Mon pseudo"
+                                    className="w-full p-4 border-2 border-gray-300 rounded-xl text-lg mb-2 focus:border-blue-500 focus:outline-none"
+                                />
+                                <p className="text-sm text-gray-500 mb-4 text-center">Ne mets pas ton vrai nom. Retiens bien ton pseudo !</p>
+                                <button
+                                    type="submit"
+                                    disabled={!nouveauPseudo.trim()}
+                                    className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:from-gray-300 disabled:to-gray-400 text-white font-bold py-4 px-8 rounded-full text-xl transition"
+                                >
+                                    Commencer →
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                );
+            }
+
+            // ===== ÉCRAN 2 : choix du niveau =====
+            if (niveau === "") {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4 sm:p-8">
+                        <div className="max-w-2xl mx-auto">
+                            <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8">
+                                <h1 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-2">
+                                    Bonjour {pseudo} ! 👋
+                                </h1>
+                                <p className="text-center text-gray-600 mb-8">Choisis ton niveau de lecture</p>
+
+                                <div className="space-y-4">
+                                    {NIVEAUX.map(n => {
+                                        const total = textesDuNiveau(n.nom).length;
+                                        const faits = Object.keys(textesFaits(pseudo, n.nom)).length;
+                                        return (
+                                            <button
+                                                key={n.nom}
+                                                onClick={() => demarrerNiveau(n.nom)}
+                                                className={`w-full text-left p-6 rounded-2xl font-medium transition transform hover:scale-[1.02] border-2 ${n.boite}`}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex-1">
+                                                        <span className={`text-2xl font-bold ${n.titre}`}>Niveau {n.nom}</span>
+                                                        <p className="text-gray-600 mt-1">{n.desc}</p>
+                                                        <p className="text-gray-700 mt-2 font-semibold">{faits} / {total} textes terminés</p>
+                                                        <div className="bg-white/70 h-3 rounded-full overflow-hidden mt-1 border border-gray-200">
+                                                            <div className="bg-gradient-to-r from-green-400 to-teal-500 h-full" style={{ width: `${(faits / total) * 100}%` }}></div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-4xl ml-4">{n.emoji}</div>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <button
+                                    onClick={changerPseudo}
+                                    className="w-full mt-6 text-gray-500 hover:text-gray-700 underline"
+                                >
+                                    Ce n'est pas moi / Changer de pseudo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // ===== ÉCRAN 3 : niveau terminé =====
+            if (termine) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4 sm:p-8">
+                        <div className="max-w-2xl mx-auto">
+                            <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 text-center">
+                                <div className="flex justify-center mb-6 text-yellow-500"><Trophy /></div>
+                                <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Bravo {pseudo} ! 🎉</h2>
+                                <p className="text-xl sm:text-2xl text-gray-600 mb-6">
+                                    Tu as terminé tous les textes du niveau <span className="font-bold text-purple-600">{niveau}</span> !
+                                </p>
+                                <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-2xl p-6 mb-6">
+                                    <p className="text-2xl font-bold text-gray-800">
+                                        {textesDuNiveau(niveau).length} textes terminés !
+                                    </p>
+                                </div>
+                                <div className="flex flex-col gap-4">
+                                    <button
+                                        onClick={retourMenu}
+                                        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full transition"
+                                    >
+                                        Choisir un autre niveau
+                                    </button>
+                                    <button
+                                        onClick={recommencerNiveau}
+                                        className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-8 rounded-full transition"
+                                    >
+                                        Recommencer ce niveau depuis le début
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const texteActuel = fileTextes[indexTexte];
+            if (!texteActuel) return null;
+            const questionActuelle = texteActuel.questions[questionNum];
+            const totalQuestions = texteActuel.questions.length;
+            const nbFaits = Object.keys(textesFaits(pseudo, niveau)).length;
+            const totalNiveau = textesDuNiveau(niveau).length;
+            const numeroTexte = nbFaits + 1;
+
+            const enTete = (
+                <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+                    <span className="text-base sm:text-lg font-semibold text-gray-600">{pseudo} - {niveau}</span>
+                    <div className="flex gap-3">
+                        <span className="bg-purple-100 px-4 py-2 rounded-full font-bold text-purple-700">
+                            Texte {Math.min(numeroTexte, totalNiveau)}/{totalNiveau}
+                        </span>
+                        <button
+                            onClick={retourMenu}
+                            className="text-sm text-blue-600 hover:text-blue-800 font-semibold underline"
+                        >
+                            Menu
+                        </button>
+                    </div>
+                </div>
+            );
+
+            // ===== ÉCRAN 4 : lecture =====
+            if (!lectureFaite) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4 sm:p-8">
+                        <div className="max-w-3xl mx-auto">
+                            <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8">
+                                {enTete}
+                                <h2 className="text-xl sm:text-2xl font-bold text-center text-purple-600 mb-6">{texteActuel.titre}</h2>
+                                <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-5 sm:p-6 mb-8 border-4 border-yellow-200">
+                                    <p className="text-base sm:text-lg leading-relaxed text-gray-800" style={{ lineHeight: "2" }}>
+                                        {texteActuel.texte}
+                                    </p>
+                                </div>
+                                <div className="text-center">
+                                    <button
+                                        onClick={() => setLectureFaite(true)}
+                                        className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-3 sm:py-4 px-8 sm:px-12 rounded-full text-lg sm:text-xl transition transform hover:scale-105"
+                                    >
+                                        J'ai terminé de lire ! →
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // ===== ÉCRAN 5 : questionnaire =====
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-50 p-4 sm:p-8">
+                    <div className="max-w-6xl mx-auto">
+                        {enTete}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8">
+                                <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Le texte</h2>
+                                <h3 className="text-lg sm:text-xl font-bold text-center text-purple-600 mb-4">{texteActuel.titre}</h3>
+                                <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-5 sm:p-6 border-4 border-yellow-200">
+                                    <p className="text-base sm:text-lg leading-relaxed text-gray-800" style={{ lineHeight: "2" }}>
+                                        {texteActuel.texte}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Questionnaire</h1>
+                                    <div className="bg-green-100 px-4 py-2 rounded-full">
+                                        <span className="font-bold text-green-700">Question {questionNum + 1}/{totalQuestions}</span>
+                                    </div>
+                                </div>
+
+                                <div className="mb-4">
+                                    <div className="bg-gray-200 h-3 rounded-full overflow-hidden">
+                                        <div
+                                            className="bg-gradient-to-r from-green-400 to-teal-500 h-full transition-all duration-300"
+                                            style={{ width: `${((questionNum + 1) / totalQuestions) * 100}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-5 sm:p-6 mb-6 border-2 border-blue-200">
+                                    <p className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">{questionActuelle.question}</p>
+                                    <div className="space-y-3">
+                                        {questionActuelle.options.map((option, index) => (
+                                            <button
+                                                key={index}
+                                                onClick={() => repondre(index)}
+                                                disabled={showResult}
+                                                className={`w-full text-left p-3 sm:p-4 rounded-xl font-medium transition ${
+                                                    showResult
+                                                        ? index === questionActuelle.reponse
+                                                            ? "bg-green-500 text-white"
+                                                            : "bg-gray-100 text-gray-800"
+                                                        : "bg-white hover:bg-blue-100 border-2 border-gray-200 hover:border-blue-400 text-gray-800"
+                                                }`}
+                                            >
+                                                <span className="font-bold mr-3">{String.fromCharCode(65 + index)}.</span>
+                                                {option}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {showResult && (
+                                    <div className={`text-center p-5 sm:p-6 rounded-2xl ${isCorrect ? "bg-green-100" : "bg-red-100"}`}>
+                                        <div className="flex items-center justify-center gap-3 mb-2">
+                                            {isCorrect ? (
+                                                <>
+                                                    <div className="text-green-500"><CheckCircle /></div>
+                                                    <span className="text-2xl sm:text-3xl font-bold text-green-700">Bravo !</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="text-red-500"><XCircle /></div>
+                                                    <span className="text-2xl sm:text-3xl font-bold text-red-700">Oups !</span>
+                                                </>
+                                            )}
+                                        </div>
+                                        <p className="text-base sm:text-lg text-gray-700">
+                                            {isCorrect ? "C'est la bonne réponse !" : "Ce n'est pas la bonne réponse."}
+                                        </p>
+                                    </div>
+                                )}
+
+                                <div className="mt-6 flex justify-center">
+                                    <div className="bg-purple-100 px-5 sm:px-6 py-3 rounded-full">
+                                        <span className="font-bold text-purple-700">Score : {score}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<LectureProgressive />);
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('sw.js').catch(function () {});
+            });
+        }
+    </script>
+</body>
+</html>
